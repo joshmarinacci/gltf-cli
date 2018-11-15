@@ -1,5 +1,28 @@
-//global.XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest
-global.XMLHttpRequest = require('xhr2')
+class Blob {
+    constructor(buffers,options) {
+        console.log("the buffers are",buffers,options)
+        this.buffers = buffers
+    }
+}
+global.Blob = Blob
+global.window = {}
+class FileReader {
+    constructor() {
+        console.log("making a file reader")
+    }
+    readAsDataURL(blob) {
+        console.log("reading the blob",this)
+        this.result = 'blah'
+        setTimeout(()=>{
+            console.log("this is",this.onloadend)
+            this.onloadend()
+        },0)
+    }
+}
+global.window.FileReader = FileReader
+
+
+
 const THREE = require('three')
 const fs = require('fs')
 const path = require('path')
@@ -47,7 +70,8 @@ Object.assign( THREE.FileLoader.prototype, {
 })
 
 eval(fs.readFileSync('./node_modules/three/examples/js/loaders/GLTFLoader.js').toString())
-// console.log("GLTF CLI",THREE.GLTFLoader)
+eval(fs.readFileSync('./node_modules/three/examples/js/exporters/GLTFExporter.js').toString())
+console.log("GLTF CLI",THREE.GLTFExporter)
 
 function processOptions(arr, defaults) {
     // console.log("processing",arr)
@@ -84,6 +108,7 @@ if(missing(opts.input)) return console.error("ERROR: 'input' argument is missing
 
 
 if(opts.info) return printInfo(opts)
+if(opts.output) return outputGLTF(opts)
 
 
 function reallyPrintInfo(model) {
@@ -108,7 +133,7 @@ function reallyPrintInfo(model) {
             obj.geometry.computeBoundingSphere()
             console.log("geometery",obj.geometry.boundingSphere)
             if(obj.geometry.isBufferGeometry) {
-                console.log("doing buffered geometry")
+                // console.log("doing buffered geometry")
                 console.log("geo position count: ", obj.geometry.attributes.position.count)
             }
         }
@@ -134,9 +159,20 @@ function printInfo(opts) {
         (err)=>{
             console.log("got ane rror",err)
         })
-    // loader.load(opts.input,(gltf) =>{
-    //     console.log("loaded hte gltf")
+}
+function reallyOutputGLTF(model) {
+    // console.log(model.scene)
+    const exp = new THREE.GLTFExporter()
+    exp.parse(model.scene,(gltf)=>{
+        console.log("got",gltf)
+    })
+    // new THREE.GLTFExporter().parse(model.scene,(gltf)=>{
+    //     console.log(gltf);
     // })
+}
+function outputGLTF(opts) {
+    const loader = new THREE.GLTFLoader()
+    loader.load(opts.input,(loaded)=>reallyOutputGLTF(loaded),undefined,(err)=>console.error(err))
 }
 
 /*
