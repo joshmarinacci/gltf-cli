@@ -9,6 +9,7 @@
     <script src="./node_modules/three/build/three.js"></script>
     <!-- needed for loading GLTF files -->
     <script src="./node_modules/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="./node_modules/three/examples/js/exporters/GLTFExporter.js"></script>
 
     <style type="text/css">
         html, body {
@@ -113,6 +114,10 @@
                         console.log(obj.geometry.toJSON().data)
                     }
                 }
+            })
+
+            new THREE.GLTFExporter().parse(model.scene,(result)=>{
+                console.log("got a result",result)
             })
             // scene.add(model.scene)
         })

@@ -1,20 +1,24 @@
 class Blob {
     constructor(buffers,options) {
-        console.log("the buffers are",buffers,options)
+        // console.log("the buffers are",buffers,options)
         this.buffers = buffers
+        // console.log('the first buffer is',Buffer.from(new Uint8Array(this.buffers[0])))
     }
 }
 global.Blob = Blob
 global.window = {}
 class FileReader {
     constructor() {
-        console.log("making a file reader")
+        // console.log("making a file reader")
     }
     readAsDataURL(blob) {
-        console.log("reading the blob",this)
-        this.result = 'blah'
+        // console.log("reading the blob",blob.buffers[0])
+        const bufs = blob.buffers.map(b => Buffer.from(new Uint8Array(b)))
+        const buf = Buffer.concat(bufs)
+        this.result = 'data:application/octet-stream;base64,'+buf.toString('base64')
+        // console.log("generated the result",this.result)
         setTimeout(()=>{
-            console.log("this is",this.onloadend)
+            // console.log("this is",this.onloadend)
             this.onloadend()
         },0)
     }
@@ -160,11 +164,13 @@ function printInfo(opts) {
             console.log("got ane rror",err)
         })
 }
-function reallyOutputGLTF(model) {
+function reallyOutputGLTF(model,opts) {
     // console.log(model.scene)
     const exp = new THREE.GLTFExporter()
     exp.parse(model.scene,(gltf)=>{
         console.log("got",gltf)
+        console.log("writing to ",opts.output)
+        fs.writeFileSync(opts.output,JSON.stringify(gltf,null,2))
     })
     // new THREE.GLTFExporter().parse(model.scene,(gltf)=>{
     //     console.log(gltf);
@@ -172,7 +178,7 @@ function reallyOutputGLTF(model) {
 }
 function outputGLTF(opts) {
     const loader = new THREE.GLTFLoader()
-    loader.load(opts.input,(loaded)=>reallyOutputGLTF(loaded),undefined,(err)=>console.error(err))
+    loader.load(opts.input,(loaded)=>reallyOutputGLTF(loaded,opts),undefined,(err)=>console.error(err))
 }
 
 /*
