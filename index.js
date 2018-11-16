@@ -1,3 +1,5 @@
+// STUB IN BROWSER APIs
+
 class Blob {
     constructor(buffers,options) {
         this.buffers = buffers.map(b => {
@@ -5,12 +7,9 @@ class Blob {
             return b
         })
         this.options = options
-        // console.log("made a blob",this.buffers)
-        // console.log("first is",this.buffers[0])
     }
 }
 global.Blob = Blob
-
 
 function toArrayBuffer(buf) {
     var ab = new ArrayBuffer(buf.length);
@@ -31,16 +30,11 @@ class FileReader {
         setTimeout(()=> this.onloadend(),0)
     }
     readAsArrayBuffer(blob) {
-        console.log("reading as an array buffer",blob)
         const bufs = blob.buffers.map(b => {
             return new Uint8Array(b)
         })
-        // console.log("convertted to",bufs)
         const buf = Buffer.concat(bufs)
-        // console.log("length of final buffer is", buf.length)
         this.result = toArrayBuffer(buf)
-        // this.result = buf.buffer
-        // console.log("and the result is", this.result)
         setTimeout(()=> this.onloadend(),0)
     }
 }
@@ -51,16 +45,13 @@ global.window = { FileReader: FileReader }
 const THREE = require('three')
 const fs = require('fs')
 
-THREE.FileLoader = function(manager) {
-    // this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
-}
+//STUB IN a FileLoader impl that uses node filesystem apis
+THREE.FileLoader = function(manager) { }
 Object.assign( THREE.FileLoader.prototype, {
     load: function ( url, onLoad, onProgress, onError ) {
         console.log("loading from ",url)
-        // console.log("the path is",this.path)
-        // console.log("responsetype is",this.responseType)
         fs.readFile(url, (err,data)=>{
-            // console.log("loaded up a buffer",data)
+            if(err) return onError(err)
             onLoad(data.buffer)
         })
     },
@@ -92,11 +83,11 @@ Object.assign( THREE.FileLoader.prototype, {
 
 })
 
+// load up using eval because these aren't written as node modules
 eval(fs.readFileSync('./node_modules/three/examples/js/loaders/GLTFLoader.js').toString())
 eval(fs.readFileSync('./node_modules/three/examples/js/exporters/GLTFExporter.js').toString())
 
 function processOptions(arr, defaults) {
-    // console.log("processing",arr)
     const opts = {}
     Object.assign(opts,defaults)
     arr.map(arg => {
@@ -197,12 +188,3 @@ function outputGLTF(opts) {
     const loader = new THREE.GLTFLoader()
     loader.load(opts.input,(loaded)=>reallyOutputGLTF(loaded,opts),undefined,(err)=>console.error(err))
 }
-
-/*
-//- Input param
-- Binary param
-- Output name or auto detect. Never overwrite
-- Recenter = true
-- Info prints vertexes faces animations models lights layers of wrapping around a mesh. Estimated size.
-
- */
