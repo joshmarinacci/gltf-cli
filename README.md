@@ -1,5 +1,7 @@
 ## read and write GLTFS
 
+*Note* GLTF-cli does not current load and save models with images
+
 load GLTF and print info
 
 ```
