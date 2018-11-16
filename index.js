@@ -5,7 +5,7 @@ class Blob {
             return b
         })
         this.options = options
-        console.log("made a blob",this.buffers)
+        // console.log("made a blob",this.buffers)
         // console.log("first is",this.buffers[0])
     }
 }
@@ -174,15 +174,19 @@ function reallyOutputGLTF(model,opts) {
     const exp = new THREE.GLTFExporter()
     const o = {}
     if(opts.binary) o.binary = true
+
+    model.scene.traverse((obj)=>{
+        if(opts.recenter) {
+            console.log("recentering")
+            obj.position.set(0,0,0)
+            if(obj.isMesh) {
+                obj.geometry.center()
+            }
+        }
+    })
     exp.parse(model.scene,(data)=>{
         console.log("writing to ",opts.output)
-        console.log("array buffer is",data)
         if(opts.binary === true) {
-            var dv = new DataView( data );
-            for(let i=0; i<20; i++) {
-                console.log('value',i,dv.getInt8(i))
-            }
-
             fs.writeFileSync(opts.output,Buffer.from(new Uint8Array(data)))
         } else {
             fs.writeFileSync(opts.output, JSON.stringify(data, null, 2))
