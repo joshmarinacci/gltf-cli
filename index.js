@@ -1,36 +1,55 @@
 class Blob {
     constructor(buffers,options) {
-        // console.log("the buffers are",buffers,options)
-        this.buffers = buffers
-        // console.log('the first buffer is',Buffer.from(new Uint8Array(this.buffers[0])))
+        this.buffers = buffers.map(b => {
+            if(b instanceof DataView) return b.buffer
+            return b
+        })
+        this.options = options
+        console.log("made a blob",this.buffers)
+        // console.log("first is",this.buffers[0])
     }
 }
 global.Blob = Blob
-global.window = {}
+
+
+function toArrayBuffer(buf) {
+    var ab = new ArrayBuffer(buf.length);
+    var view = new Uint8Array(ab);
+    for (var i = 0; i < buf.length; ++i) {
+        view[i] = buf[i];
+    }
+    return ab;
+}
+
 class FileReader {
     constructor() {
-        // console.log("making a file reader")
     }
     readAsDataURL(blob) {
-        // console.log("reading the blob",blob.buffers[0])
         const bufs = blob.buffers.map(b => Buffer.from(new Uint8Array(b)))
         const buf = Buffer.concat(bufs)
         this.result = 'data:application/octet-stream;base64,'+buf.toString('base64')
-        // console.log("generated the result",this.result)
-        setTimeout(()=>{
-            // console.log("this is",this.onloadend)
-            this.onloadend()
-        },0)
+        setTimeout(()=> this.onloadend(),0)
+    }
+    readAsArrayBuffer(blob) {
+        console.log("reading as an array buffer",blob)
+        const bufs = blob.buffers.map(b => {
+            return new Uint8Array(b)
+        })
+        // console.log("convertted to",bufs)
+        const buf = Buffer.concat(bufs)
+        // console.log("length of final buffer is", buf.length)
+        this.result = toArrayBuffer(buf)
+        // this.result = buf.buffer
+        // console.log("and the result is", this.result)
+        setTimeout(()=> this.onloadend(),0)
     }
 }
-global.window.FileReader = FileReader
+global.window = { FileReader: FileReader }
 
 
 
 const THREE = require('three')
 const fs = require('fs')
-const path = require('path')
-
 
 THREE.FileLoader = function(manager) {
     // this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
@@ -75,7 +94,6 @@ Object.assign( THREE.FileLoader.prototype, {
 
 eval(fs.readFileSync('./node_modules/three/examples/js/loaders/GLTFLoader.js').toString())
 eval(fs.readFileSync('./node_modules/three/examples/js/exporters/GLTFExporter.js').toString())
-console.log("GLTF CLI",THREE.GLTFExporter)
 
 function processOptions(arr, defaults) {
     // console.log("processing",arr)
@@ -105,7 +123,7 @@ const opts = processOptions(process.argv.slice(2),{
     info:false,
 })
 
-// console.log('running with options',opts)
+console.log('running with options',opts)
 
 
 if(missing(opts.input)) return console.error("ERROR: 'input' argument is missing!")
@@ -144,37 +162,32 @@ function reallyPrintInfo(model) {
     })
 }
 function printInfo(opts) {
-    // console.log("loading",opts.input)
     const loader = new THREE.GLTFLoader()
-    // console.log("path is",path.parse(opts.input))
-    const parts = path.parse(opts.input);
-    // console.log("parts are",parts)
-    // const data = fs.readFileSync(opts.input).toString()
-    // console.log('data is',data)
     const url = ''+opts.input
-    // console.log('loading from the url',url)
     loader.load(url,
-        (foo)=>{
-            reallyPrintInfo(foo)
-        },
-        (bar)=>{
-            console.log("prog",bar)
-        },
-        (err)=>{
-            console.log("got ane rror",err)
-        })
+        (foo)=>  reallyPrintInfo(foo),
+        (bar)=> console.log("prog",bar),
+        (err)=> console.log("got ane rror",err)
+    )
 }
 function reallyOutputGLTF(model,opts) {
-    // console.log(model.scene)
     const exp = new THREE.GLTFExporter()
-    exp.parse(model.scene,(gltf)=>{
-        console.log("got",gltf)
+    const o = {}
+    if(opts.binary) o.binary = true
+    exp.parse(model.scene,(data)=>{
         console.log("writing to ",opts.output)
-        fs.writeFileSync(opts.output,JSON.stringify(gltf,null,2))
-    })
-    // new THREE.GLTFExporter().parse(model.scene,(gltf)=>{
-    //     console.log(gltf);
-    // })
+        console.log("array buffer is",data)
+        if(opts.binary === true) {
+            var dv = new DataView( data );
+            for(let i=0; i<20; i++) {
+                console.log('value',i,dv.getInt8(i))
+            }
+
+            fs.writeFileSync(opts.output,Buffer.from(new Uint8Array(data)))
+        } else {
+            fs.writeFileSync(opts.output, JSON.stringify(data, null, 2))
+        }
+    },o)
 }
 function outputGLTF(opts) {
     const loader = new THREE.GLTFLoader()

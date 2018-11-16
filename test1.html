@@ -118,7 +118,29 @@
 
             new THREE.GLTFExporter().parse(model.scene,(result)=>{
                 console.log("got a result",result)
-            })
+                console.log("arry buffer is",result.byteLength)
+
+                var dv = new DataView( result );
+                for(let i=0; i<20; i++) {
+                    console.log('value',i,dv.getInt8(i))
+                }
+
+                var link = document.createElement( 'a' );
+                link.style.display = 'none';
+                document.body.appendChild( link ); // Firefox workaround, see #6594
+
+                function save( blob, filename ) {
+                    link.href = URL.createObjectURL( blob );
+                    link.download = filename;
+                    link.click();
+                    // URL.revokeObjectURL( url ); breaks Firefox...
+                }
+                function saveArrayBuffer( buffer, filename ) {
+                    save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+                }
+
+                // saveArrayBuffer(result,'scene.glb')
+            },{binary:true})
             // scene.add(model.scene)
         })
 
